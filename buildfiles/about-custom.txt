@@ -1,0 +1,39 @@
+ BUILD TARGETS
+
+ *******************************************************************
+ CLEAN
+ *******************************************************************
+ clean:         Rimuove tutte le cartelle create da Ant tranne
+                quelle delle librerie
+ clean-lib:     Rimuove la cartella delle librerie creata da Ivy
+ clean-headers: Rimuove gli header nativi per il codice C 
+
+ *******************************************************************
+ UTILITY
+ *******************************************************************
+ create-jar-manifest: Crea il manifest per un jar
+
+ *******************************************************************
+ COMPILE
+ *******************************************************************
+ compile-jlib:    Compila la libreria
+ compile-monitor: Compila l'interfaccia utente per provare la
+                  libreria
+ compile-test:    Compila un semplice test della libreria
+ compile-jni:     Compila il codice nativo C
+ make-headers:    Genera gli header nativi per il codice C
+
+ *******************************************************************
+ PACKAGING
+ *******************************************************************
+ jar-jlib:    Genera l'archivio della libreria
+ jar-monitor: Genera l'archivio dell'interfaccia utente per provare
+              la libreria
+ jar-test:    Genera l'archivio per effettuare un semplice test della
+              libreria
+
+ *******************************************************************
+ DISTRIBUTION
+ *******************************************************************
+ dist:    Prepara il contenuto degli archivi per la release
+ release: Genera gli archivi per la release
