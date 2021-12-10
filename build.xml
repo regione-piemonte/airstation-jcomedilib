@@ -1,0 +1,340 @@
+<!-- Title:  Build procedure for the project JComedilib -->
+<!-- Author: Pierfrancesco.Vallosio@consulenti.csi.it -->
+<!-- Date:   29-Oct-2003 -->
+<!-- $Id: build.xml,v 1.7 2010/12/21 18:50:04 pfvallosio Exp $ -->
+
+<project name="jcomedilib" basedir="." default="default" xmlns:ivy="antlib:fr.jayasoft.ivy.ant">
+
+	<property file="buildfiles/build.properties" />
+	<property environment="env" />
+
+	<!-- ############################################################# -->
+	<!-- # public target: default                                    # -->
+	<!-- ############################################################# -->
+	<target name="default" description="Verifica se eseguire il build per un solo environment specificato a linea di commando con -Dtarget=${target} o per tutti gli environment ">
+		<condition property="first-call" value="distribution">
+			<not>
+				<equals arg1="${target}" arg2="$${target}" />
+			</not>
+		</condition>
+		<condition property="first-call" value="all-target">
+			<equals arg1="${target}" arg2="$${target}" />
+		</condition>
+		<echo message="target: ${target}" />
+		<echo message="first-call: ${first-call}" />
+		<antcall target="${first-call}" />
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # public target: all-target                                 # -->
+	<!-- ############################################################# -->
+	<target name="all-target" description="Lancia il build per le varie distribuzioni in sequenza">
+		<antcall target="distribution">
+			<param name="target" value="dev" />
+		</antcall>
+		<antcall target="distribution">
+			<param name="target" value="tst" />
+		</antcall>
+		<antcall target="distribution">
+			<param name="target" value="coll" />
+		</antcall>
+		<antcall target="distribution">
+			<param name="target" value="prod" />
+		</antcall>
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # public target: init                                       # -->
+	<!-- ############################################################# -->
+	<target name="init" description="Inizializza lo script Ant">
+		<tstamp>
+			<format property="ANNO-COPYRIGHT" pattern="yyyy" />
+			<format property="current.date" pattern="dd/MM/yyyy HH:mm:ss" locale="it" />
+		</tstamp>
+		<echo message="current.date: ${current.date}" />
+		<condition property="target" value="dev">
+			<equals arg1="${target}" arg2="$${target}" />
+		</condition>
+		<echo message="target: ${target}" />
+		<loadproperties srcFile="${buildfiles}/${target}.properties" />
+		<property name="temp-target" value="${temp}/${target}" />
+		<property name="classes-target" value="${classes}/${target}" />
+		<property name="archives-target" value="${archives}/${target}" />
+		<property name="dist-target" value="${dist}/${target}" />
+		<mkdir dir="${temp-target}" />
+		<mkdir dir="${classes-target}" />
+		<mkdir dir="${archives-target}" />
+		<mkdir dir="${archives-target}/lib32" />
+		<mkdir dir="${archives-target}/lib64" />
+		<mkdir dir="${dist-target}" />
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # public target: compile-all                                # -->
+	<!-- ############################################################# -->
+	<target name="compile-all" depends="compile-jlib, compile-monitor, compile-test" description="Compila tutti i sorgenti">
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # internal target: create-jar-manifest                      # -->
+	<!-- ############################################################# -->
+	<target name="create-jar-manifest" description="Crea il manifest per un jar">
+		<manifest file="${temp-target}/${manifest-name}.MF">
+			<attribute name="Built-By" value="${user.name}" />
+			<attribute name="Implementation-Vendor" value="${company-name}" />
+			<attribute name="Implementation-Title" value="${product-name}.${component-name}" />
+			<attribute name="Implementation-Version" value="${product-version}" />
+			<section name="${company-name}">
+				<attribute name="Nome-Prodotto" value="${product-name}" />
+				<attribute name="Nome-Componente" value="${component-name}" />
+				<attribute name="Versione" value="${product-version}" />
+				<attribute name="Ambiente" value="${nome.ambiente}" />
+			</section>
+		</manifest>
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # public target: package-all                                # -->
+	<!-- ############################################################# -->
+	<target name="package-all" depends="jar-jlib, jar-monitor, jar-test, compile-jni" description="Esegue il packaging di ogni componente del prodotto">
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # public target: distribution                               # -->
+	<!-- ############################################################# -->
+	<target name="distribution" depends="release" description="Costruisce il tar per la distribuzione">
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # public target: clean-dist                                 # -->
+	<!-- ############################################################# -->
+	<target name="clean-dist" description="Rimuove la cartella delle distribuzioni">
+		<delete dir="${dist}" />
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # public target: clean-classes                              # -->
+	<!-- ############################################################# -->
+	<target name="clean-classes" description="Rimuove la cartella dei sorgenti compilati">
+		<delete dir="${classes}" />
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # public target: clean-archives                             # -->
+	<!-- ############################################################# -->
+	<target name="clean-archives" description="Rimuove la cartella degli archivi (war, ear, ...)">
+		<delete dir="${archives}" />
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # public target: clean-temp                                 # -->
+	<!-- ############################################################# -->
+	<target name="clean-temp" description="Rimuove la cartella dei files temporanei di build">
+		<delete dir="${temp}" />
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # internal target: clean                                    # -->
+	<!-- ############################################################# -->
+	<target name="clean" depends="clean-dist, clean-classes, clean-headers, clean-archives, clean-temp" description="Rimuove tutte le cartelle create da Ant tranne quelle delle librerie">
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # internal target: clean-headers                            # -->
+	<!-- ############################################################# -->
+	<target name="clean-headers" description="Rimuove gli header nativi per il codice C">
+		<delete file="${src-c}/it_csi_aria_jcomedilib_Comedi.h" />
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # public target: clean-all                                  # -->
+	<!-- ############################################################# -->
+	<target name="clean-all" depends="clean" description="Rimuove tutte le cartelle create da Ant">
+		<delete dir="${build}" />
+		<delete dir="./target" />
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # public target: show-vars                                  # -->
+	<!-- ############################################################# -->
+	<target name="show-vars" depends="init" description="Visualizza tutte le variabili impostate nei file di properties e/o da linea di comando">
+		<echo message="*****************************************" />
+		<echo message="********  ${product-name} environment  *******" />
+		<echo message="*****************************************" />
+		<echo message="Runtime:" />
+		<echo message="JAVA_HOME = ${env.JAVA_HOME}" />
+		<echo message="ANT_HOME = ${env.ANT_HOME}" />
+		<echo message="JAVA_VERSION = ${java.version}" />
+		<echo message="ANT_VERSION = ${ant.version}" />
+		<echo message="" />
+		<echo message="Target:" />
+		<echo message="TARGET = ${target}" />
+		<echo message="" />
+		<echo message="Application:" />
+		<echo message="VERSION = ${product-version}" />
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # public target: about                                      # -->
+	<!-- ############################################################# -->
+	<target name="about" description="Visualizza l'elenco dei target pubblici dello script">
+		<loadfile property="about" srcFile="buildfiles/about.txt" />
+		<echo message="${about}" />
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # public target: about-custom                               # -->
+	<!-- ############################################################# -->
+	<target name="about-custom" description="Visualizza l'elenco dei target privati dello script">
+		<loadfile property="about-custom" srcfile="buildfiles/about-custom.txt" />
+		<echo message="${about-custom}" />
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # internal target: compile-jlib                             # -->
+	<!-- ############################################################# -->
+	<target name="compile-jlib" depends="init" description="Compila la libreria">
+		<mkdir dir="${classes-target}/jcomedilib" />
+		<javac srcdir="${src-java}" destdir="${classes-target}/jcomedilib" source="1.6" target="1.6" sourcepath="" includeantruntime="false" debug="${flag-debug}">
+			<include name="it/csi/aria/jcomedilib/**" />
+		</javac>
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # internal target: compile-monitor                          # -->
+	<!-- ############################################################# -->
+	<target name="compile-monitor" depends="init, jar-jlib" description="Compila l'interfaccia utente per provare la libreria">
+		<mkdir dir="${classes-target}/monitor" />
+		<javac srcdir="${src-java}" destdir="${classes-target}/monitor" source="1.6" target="1.6" sourcepath="" includeantruntime="false" debug="${flag-debug}">
+			<classpath>
+				<fileset dir="${archives-target}">
+					<include name="jcomedilib-${product-version}.jar" />
+				</fileset>
+			</classpath>
+			<include name="it/csi/aria/monitor/**" />
+		</javac>
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # internal target: compile-test                             # -->
+	<!-- ############################################################# -->
+	<target name="compile-test" depends="init, jar-jlib" description="Compila un semplice test della libreria">
+		<mkdir dir="${classes-target}/test" />
+		<javac srcdir="${src-java}" destdir="${classes-target}/test" source="1.6" target="1.6" sourcepath="" includeantruntime="false" debug="${flag-debug}">
+			<classpath>
+				<fileset dir="${archives-target}">
+					<include name="jcomedilib-${product-version}.jar" />
+				</fileset>
+			</classpath>
+			<include name="it/csi/aria/test/**" />
+		</javac>
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # internal target: jar-jlib                                 # -->
+	<!-- ############################################################# -->
+	<target name="jar-jlib" depends="compile-jlib" description="Genera l'archivio della libreria">
+		<antcall target="create-jar-manifest">
+			<param name="manifest-name" value="JCOMEDILIB" />
+		</antcall>
+		<jar destfile="${archives-target}/jcomedilib-${product-version}.jar" manifest="${temp-target}/JCOMEDILIB.MF">
+			<fileset dir="${classes-target}/jcomedilib" />
+		</jar>
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # internal target: jar-monitor                              # -->
+	<!-- ############################################################# -->
+	<target name="jar-monitor" depends="compile-monitor" description="Genera l'archivio dell'interfaccia utente per provare la libreria">
+		<antcall target="create-jar-manifest">
+			<param name="manifest-name" value="MONITOR" />
+		</antcall>
+		<jar destfile="${archives-target}/monitor-${product-version}.jar" manifest="${temp-target}/MONITOR.MF">
+			<fileset dir="${classes-target}/monitor" />
+			<fileset dir="${src}/images/monitor" />
+		</jar>
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # internal target: jar-test                                 # -->
+	<!-- ############################################################# -->
+	<target name="jar-test" depends="compile-test" description="Genera l'archivio per effettuare un semplice test della libreria">
+		<antcall target="create-jar-manifest">
+			<param name="manifest-name" value="TEST" />
+		</antcall>
+		<jar destfile="${archives-target}/test.jar" manifest="${temp-target}/TEST.MF">
+			<manifest>
+				<attribute name="Main-Class" value="it.csi.aria.test.ReadTest" />
+				<attribute name="Class-Path" value="jcomedilib-${product-version}.jar" />
+			</manifest>
+			<fileset dir="${classes-target}/test" />
+		</jar>
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # internal target: make-headers                             # -->
+	<!-- ############################################################# -->
+	<target name="make-headers" depends="jar-jlib" description="Genera gli header nativi per il codice C">
+		<javah destdir="${src-c}" class="it.csi.aria.jcomedilib.Comedi" classpath="${archives-target}/jcomedilib-${product-version}.jar" />
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # internal target: compile-jni                              # -->
+	<!-- ############################################################# -->
+	<target name="compile-jni" depends="make-headers" description="Compila il codice nativo C">
+		<exec executable="make" failonerror="false">
+			<arg line="-f ${buildfiles}/Makefile DST_DIR=${archives-target}" />
+		</exec>
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # internal target: dist                                     # -->
+	<!-- ############################################################# -->
+	<target name="dist" depends="package-all" description="Prepara il contenuto degli archivi per la release">
+		<mkdir dir="${dist-target}/bin/jcomedilib" />
+		<copy todir="${dist-target}/bin/jcomedilib">
+			<fileset dir="${archives-target}" />
+		</copy>
+		<mkdir dir="${dist-target}/src/jcomedilib" />
+		<copy todir="${dist-target}/src/jcomedilib">
+			<fileset dir="${basedir}">
+				<include name="src/**" />
+				<include name="include/**" />
+				<include name="lib/**" />
+				<include name="docs/**" />
+				<include name="conf/**" />
+				<include name="buildfiles/**" />
+				<include name="build.xml" />
+				<include name="changelog.md" />
+				<include name="Copyrights.txt" />
+				<include name="CodeOfConduct.md" />
+				<include name="License.txt" />
+				<include name="AUTHORS.txt" />
+				<include name="BOM.csv" />
+				<include name="Maintainers.txt" />
+				<include name="CONTRIBUTORS.txt" />
+				<include name="README.md" />
+			</fileset>
+		</copy>
+	</target>
+
+	<!-- ############################################################# -->
+	<!-- # internal target: release                                  # -->
+	<!-- ############################################################# -->
+	<target name="release" depends="dist" description="Genera gli archivi per la release">
+		<mkdir dir="${dist-target}/bin" />
+		<tar destfile="${dist-target}/jcomedilib_bin_V${product-version}_${DSTAMP}.tgz" compression="gzip">
+			<tarfileset dir="${dist-target}/bin">
+				<include name="**" />
+			</tarfileset>
+		</tar>
+		<mkdir dir="${dist-target}/src" />
+		<tar destfile="${dist-target}/jcomedilib_src_V${product-version}_${DSTAMP}.tgz" compression="gzip">
+			<tarfileset dir="${dist-target}/src">
+				<include name="**" />
+			</tarfileset>
+		</tar>
+	</target>
+
+</project>
+

@@ -1,0 +1,3 @@
+name+version*,license*,Copyrights*,end-of-support,dependencies,language,repository,email,url
+libcomedi-0.8.1.so,LGPL-2.1,-,-,-,C,-,-,http://www.comedi.org/
+libcomedi-0.11.0.so,LGPL-2.1,-,-,-,C,-,-,http://www.comedi.org/
