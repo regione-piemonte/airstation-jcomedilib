@@ -2,6 +2,8 @@
 Jcomedilib 
 
 # Descrizione del prodotto
+Questo prodotto fa parte della suite **SRRQA - Rilevamento della Qualità dell'Aria**.
+
 Interfaccia Java per la libreria COMEDI.
 Questa interfaccia è utilizzata all'interno della componente periferico per la connessione agli analizzatori collegati alle schede A/D.
 
